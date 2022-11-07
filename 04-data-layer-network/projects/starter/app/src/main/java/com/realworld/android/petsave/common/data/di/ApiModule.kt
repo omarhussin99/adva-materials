@@ -36,7 +36,9 @@ package com.realworld.android.petsave.common.data.di
 
 import com.realworld.android.petsave.common.data.api.ApiConstants
 import com.realworld.android.petsave.common.data.api.PetFinderApi
+import com.realworld.android.petsave.common.data.api.interceptors.AuthenticationInterceptor
 import com.realworld.android.petsave.common.data.api.interceptors.LoggingInterceptor
+import com.realworld.android.petsave.common.data.api.interceptors.NetworkStatusInterceptor
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
@@ -57,8 +59,14 @@ object ApiModule {
         .addConverterFactory(MoshiConverterFactory.create())
   }
 
-  fun provideOkHttpClient(httpLoggingInterceptor: HttpLoggingInterceptor): OkHttpClient {
+  fun provideOkHttpClient(
+      httpLoggingInterceptor: HttpLoggingInterceptor,
+      networkStatusInterceptor: NetworkStatusInterceptor,
+      authenticationInterceptor: AuthenticationInterceptor
+  ): OkHttpClient {
     return OkHttpClient.Builder()
+        .addInterceptor(networkStatusInterceptor)
+        .addInterceptor(authenticationInterceptor)
         .addInterceptor(httpLoggingInterceptor)
         .build()
   }

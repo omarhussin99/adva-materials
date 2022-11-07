@@ -46,6 +46,7 @@ import com.realworld.android.petsave.common.data.api.model.ApiToken
 import com.realworld.android.petsave.common.data.preferences.Preferences
 import com.squareup.moshi.Moshi
 import okhttp3.*
+import java.time.Instant
 import javax.inject.Inject
 
 class AuthenticationInterceptor @Inject constructor(
@@ -57,8 +58,29 @@ class AuthenticationInterceptor @Inject constructor(
   }
 
   override fun intercept(chain: Interceptor.Chain): Response {
-    // Replace with your code
-    return chain.proceed(chain.request())
+      val token = preferences.getToken()
+      val tokenExpirationTime = Instant.ofEpochSecond(preferences.getTokenExpirationTime())
+      val request = chain.request()
+//      if (chain.request().headers[NO_AUTH_HEADER] != null) return chain.proceed(request)
+      val interceptorRequest: Request
+      if (tokenExpirationTime.isAfter(Instant.now())){
+          interceptorRequest = chain.createAuthenticatedRequest(token)
+      }else{
+          val tokenRefreshResponse = chain.refreshToken()
+          interceptorRequest = if (tokenRefreshResponse.isSuccessful){
+              val newToken = mapToken(tokenRefreshResponse)
+
+              if (newToken.isValid()){
+                  storeNewToken(newToken)
+                  chain.createAuthenticatedRequest(newToken.accessToken!!)
+              }else{
+                  request
+              }
+          }else{
+              request
+          }
+      }
+    return chain.proceedDeletingTokenIfUnauthorized(interceptorRequest)
   }
 
   private fun Interceptor.Chain.createAuthenticatedRequest(token: String): Request {

@@ -33,14 +33,13 @@
  */
 
 package com.realworld.android.petsave.common.data.api.model.mappers
-/**
+
 import com.realworld.android.petsave.common.data.api.model.ApiAnimal
 import com.realworld.android.petsave.common.domain.model.animal.AdoptionStatus
 import com.realworld.android.petsave.common.domain.model.animal.Media
 import com.realworld.android.petsave.common.domain.model.animal.details.*
 import com.realworld.android.petsave.common.domain.model.organization.Organization
 import com.realworld.android.petsave.common.utils.DateTimeUtils
-import java.util.*
 import javax.inject.Inject
 
 class ApiAnimalMapper @Inject constructor(
@@ -53,7 +52,18 @@ class ApiAnimalMapper @Inject constructor(
     private val apiContactMapper: ApiContactMapper
 ): ApiMapper<ApiAnimal, AnimalWithDetails> {
 
-  // Add code here
+    override fun mapToDomain(apiEntity: ApiAnimal): AnimalWithDetails {
+        return AnimalWithDetails(
+            id = apiEntity.id?: throw MappingException("Animal ID cannot be null"),
+            name = apiEntity.name.orEmpty(),
+            type = apiEntity.type.orEmpty(),
+            details = parseAnimalDetails(apiEntity),
+            media = mapMedia(apiEntity),
+            tags = apiEntity.tags.orEmpty().map { it.orEmpty() },
+            adoptionStatus = parseAdoptionStatus(apiEntity.status),
+            publishedAt = DateTimeUtils.parse(apiEntity.publishedAt.orEmpty())
+        )
+    }
 
   private fun parseAnimalDetails(apiAnimal: ApiAnimal): Details {
     return Details(
@@ -119,4 +129,3 @@ class ApiAnimalMapper @Inject constructor(
     )
   }
 }
-*/
